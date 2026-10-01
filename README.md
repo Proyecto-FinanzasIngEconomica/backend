@@ -156,17 +156,9 @@ parcialmente cubierta dentro de un mismo período.
 
 ### 10. Arrastre de deuda vencida
 
-**Decisión:** la deuda no pagada a su fecha de pago se **arrastra y acumula** en el
-siguiente estado de cuenta, generando intereses moratorios sobre el saldo impago. El
-capital arrastrado **sigue consumiendo línea de crédito**; los intereses moratorios
-generados **no** consumen cupo adicional. El sistema no bloquea automáticamente nuevas
-compras por tener saldo en mora.
+**Decisión:** si el cliente no paga en la fecha pactada, el listado de pago vencido queda abierto de forma independiente y se liquida por separado (con su propio interés moratorio), sin fusionarse con el listado que se genere en el siguiente corte. Las compras nuevas del ciclo siguiente generan su propio listado independiente. El saldo vencido sigue consumiendo línea de crédito hasta que se cancela, y no bloquea automáticamente nuevas compras mientras haya cupo disponible.
 
-**Justificación:** el enunciado no define explícitamente esta regla, por lo que se optó
-por el comportamiento más común en líneas de crédito revolventes: la mora es un costo
-adicional que se cobra aparte del cupo, mientras que el capital efectivamente adeudado
-sigue siendo parte del riesgo crediticio vigente y por tanto continúa afectando el cupo
-disponible.
+**Justificación:** de las dos formas razonables de modelar el arrastre (fusionar la deuda vencida dentro del siguiente listado, o mantenerla como una obligación independiente), se optó por la segunda porque simplifica el agregado de "listado de pago" — cada listado corresponde a un único corte y se liquida como una unidad propia — y facilita distinguir con claridad, para efectos de reporte y auditoría, qué intereses moratorios corresponden a qué período de mora, sin mezclar deudas de distintos orígenes en un solo monto exigible.
 
 ### 11. Límite de crédito: modelo de línea revolvente
 
