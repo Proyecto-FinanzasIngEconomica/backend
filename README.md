@@ -183,16 +183,15 @@ cliente de varias tiendas con perfiles de riesgo completamente independientes en
 
 ### 13. Moneda: PEN fijo, sin motor de conversión de divisas
 
-**Decisión:** el dinero se modela con un Value Object que incluye la moneda, pero en el
-alcance de este proyecto la moneda operativa es fija en **soles (PEN)**. El backend no
-implementa conversión de tipo de cambio entre monedas.
+**Decisión:** el crédito puede pactarse en soles (PEN) o dólares (USD), a elección del establecimiento por cada cliente. El Value Object Money incluye el campo currency, y todas las compras, intereses, cuotas y pagos de una misma condición de crédito se calculan y registran en la misma moneda pactada. El backend no implementa conversión de tipo de cambio entre monedas: no existe ninguna operación que convierta un monto de PEN a USD o viceversa dentro del sistema.
 
-**Justificación:** el enunciado no exige conversión de divisas, y agregarla implicaría
-resolver problemas fuera de alcance (fuente y actualización del tipo de cambio, fecha de
-referencia para la conversión, etc.), de forma similar a como el enunciado excluye
-explícitamente el cálculo de impuestos. Cualquier necesidad de mostrar montos en otra
-moneda (por ejemplo, en el frontend) es responsabilidad de una capa de presentación
-externa a este backend, con su propia fuente de tipo de cambio.
+**Justificación:** el enunciado original ya contemplaba la "moneda del crédito" como un dato configurable por cliente, por lo que soportar más de una moneda es coherente con el alcance original (no es una ampliación forzada). Lo que sigue estando fuera de alcance es la conversión entre monedas, ya que introduciría problemas no pedidos por el enunciado (fuente y actualización del tipo de cambio, fecha de referencia para la conversión), de forma similar a como se excluye el cálculo de impuestos. Cualquier necesidad de comparar o convertir montos entre monedas distintas es responsabilidad de una capa externa a este backend.
+
+### 14. Prelación de imputación de pagos
+
+**Decisión:** cuando el cliente paga el total exigible de un listado (incluyendo mora, si la hubiera), el monto pagado se imputa en este orden: primero al interés moratorio, luego al interés compensatorio, y finalmente al capital.
+
+**Justificación:** es el orden estándar de imputación de pagos en obligaciones dinerarias (cubrir primero el costo del incumplimiento, luego el costo financiero pactado, y por último el principal), y es coherente con el artículo 1257 del Código Civil peruano, que establece que quien deba capital, gastos e intereses no puede, sin consentimiento del acreedor, aplicar el pago al capital antes que a los gastos e intereses.
 
 ---
 
