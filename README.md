@@ -55,21 +55,13 @@ siempre como un mes comercial de 30 días, sin importar el mes calendario real.
 ("considerando meses de 30 días"), y además es coherente con la convención comercial
 estándar del sistema financiero peruano para expresar tasas y plazos.
 
-### 2. Base anual para la tasa diaria/mensual: configurable por cliente (30/360 o 30/365)
+### 2. Base anual para la tasa diaria/mensual: sistema 30/360
 
 **Decisión:** la conversión de la tasa efectiva anual pactada a una tasa diaria/mensual
-equivalente permite elegir, por cliente, entre base **360** o base **365** días al año.
-Esto es independiente de la decisión #1 (que sigue fija en 30 días por mes para las
-cuotas); lo configurable es únicamente el divisor anual usado para hallar la tasa diaria
-que se aplica a los días de gracia y a los intereses por días transcurridos.
+equivalente permite elegir, será fija para todo cliente en 30/360.
 
 **Justificación:** el estándar de mercado en Perú para expresar la TEA es base 360 (así lo
-usan las entidades financieras supervisadas por la SBS), pero dejar esta convención
-configurable por cliente añade valor de ingeniería sin invalidar el estándar de mercado:
-el sistema puede modelar tanto la práctica financiera formal (360) como una convención
-más "exacta" (365), documentando explícitamente el impacto de cada una sobre el costo
-efectivo del crédito — un punto pedagógicamente relevante para un curso de ingeniería
-económica.
+usan las entidades financieras supervisadas por la SBS).
 
 ### 3. Tipo de tasa pactada: TEA (Tasa Efectiva Anual)
 
