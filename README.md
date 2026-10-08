@@ -48,8 +48,7 @@ comporta.
 
 ### 1. Días por mes en el cronograma de cuotas: fijo en 30 días
 
-**Decisión:** para el cálculo de la cuota francesa (amortización), cada mes se trata
-siempre como un mes comercial de 30 días, sin importar el mes calendario real.
+**Decisión:** el cronograma de cuotas y todos los cálculos de interés usan meses comerciales de 30 días, sin importar el mes calendario real.
 
 **Justificación:** es un requisito explícito y no negociable del enunciado del curso
 ("considerando meses de 30 días"), y además es coherente con la convención comercial
@@ -57,15 +56,14 @@ estándar del sistema financiero peruano para expresar tasas y plazos.
 
 ### 2. Base anual para la tasa diaria/mensual: sistema 30/360
 
-**Decisión:** la conversión de la tasa efectiva anual pactada a una tasa diaria/mensual
-equivalente permite elegir, será fija para todo cliente en 30/360.
+**Decisión:** la conversión de la TEA a tasa diaria o mensual usa siempre un año comercial de 360 días. El sistema no ofrece la opción de elegir base 365 por cliente. La conversión es i_d = (1 + TEA)^(d/360) − 1.
 
 **Justificación:** el estándar de mercado en Perú para expresar la TEA es base 360 (así lo
 usan las entidades financieras supervisadas por la SBS).
 
-### 3. Tipo de tasa pactada: TEA (Tasa Efectiva Anual)
+### 3. Tasa de interés: se registra como la pacta el cliente, pero el sistema trabaja siempre en TEA
 
-**Decisión:** la tasa de interés que se registra por cliente es una TEA.
+**Decisión:** el administrador del negocio puede registrar la tasa compensatoria y la moratoria de cada cliente como nominal o efectiva, indicando el período al que se refieren y, si es nominal, su capitalización. Al registrar o modificar la condición de crédito, el sistema la convierte una sola vez a TEA y almacena ese valor. Todos los cálculos posteriores (período de gracia, cuotas, interés por días, mora) usan únicamente esa TEA. Los datos originales (tipo, valor, período y capitalización) se conservan solo como historial y auditoría de lo que se pactó, y no se vuelven a usar en ningún cálculo.
 
 **Justificación:** es el indicador que el sistema financiero peruano usa como referencia
 principal para pactar y comparar créditos (a diferencia de la TNA, que es solo
