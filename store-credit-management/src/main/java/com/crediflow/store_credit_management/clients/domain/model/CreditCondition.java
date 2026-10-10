@@ -6,6 +6,7 @@ import java.time.LocalTime;
 
 import com.crediflow.store_credit_management.shared.domain.model.entities.AuditableModel;
 import com.crediflow.store_credit_management.shared.domain.model.valueobjetcs.Currency;
+import com.crediflow.store_credit_management.shared.domain.model.valueobjetcs.InterestRate;
 import com.crediflow.store_credit_management.shared.domain.model.valueobjetcs.Money;
 
 import jakarta.persistence.AttributeOverride;
@@ -54,6 +55,22 @@ public class CreditCondition extends AuditableModel{
                     column = @Column(name = "tea", precision = 12, scale = 9, nullable = false))
     })
     private InterestRate compensatoryRate;
+
+    //Tasa moratoria: el costo de no pagar a tiempo
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "originalType",
+                    column = @Column(name = "late_rate_type", length = 10, nullable = false)),
+            @AttributeOverride(name = "originalValue",
+                    column = @Column(name = "late_rate_value", precision = 12, scale = 9, nullable = false)),
+            @AttributeOverride(name = "originalPeriod",
+                    column = @Column(name = "late_rate_period", length = 10, nullable = false)),
+            @AttributeOverride(name = "originalCapitalization",
+                    column = @Column(name = "late_rate_capitalization", length = 10)),
+            @AttributeOverride(name = "effectiveAnnualRate",
+                    column = @Column(name = "late_tea", precision = 12, scale = 9, nullable = false))
+    })
+    private InterestRate lateRate;
 
     //Maximo de meses en que se puede financiar una compra
     @Column(nullable = false)
