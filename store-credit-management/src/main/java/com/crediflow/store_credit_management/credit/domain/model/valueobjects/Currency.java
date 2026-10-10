@@ -1,4 +1,4 @@
-package com.crediflow.store_credit_management.creditAndBilling.domain.model.valueobjects;
+package com.crediflow.store_credit_management.credit.domain.model.valueobjects;
 
 
 
