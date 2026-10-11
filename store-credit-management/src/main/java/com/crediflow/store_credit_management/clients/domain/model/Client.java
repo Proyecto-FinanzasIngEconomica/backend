@@ -54,7 +54,7 @@ public class Client extends AuditableModel{
     private ClientStatus status;
 
     @Column 
-    private LocalDateTime desactivatedAt;
+    private LocalDateTime deactivatedAt;
 
     public static Client register(Long storeId,
                                   DocumentType documentType,
@@ -97,7 +97,7 @@ public class Client extends AuditableModel{
     //La clase NO sabe si este cliente tiene deuda, el servicio debe encargarse de eso antes de llamar esta funcion
     public void deactivate() {
         this.status = ClientStatus.INACTIVE;
-        this.desactivatedAt = LocalDateTime.now();
+        this.deactivatedAt = LocalDateTime.now();
     }
 
     public boolean isActive() {
