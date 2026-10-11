@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.crediflow.store_credit_management.credit.engine.BillingCalendar;
 import com.crediflow.store_credit_management.shared.domain.model.entities.AuditableModel;
 import com.crediflow.store_credit_management.shared.domain.model.valueobjetcs.Currency;
 import com.crediflow.store_credit_management.shared.domain.model.valueobjetcs.InterestRate;
