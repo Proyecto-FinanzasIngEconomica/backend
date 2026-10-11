@@ -9,5 +9,10 @@ public class ResourceNotFoundException extends RuntimeException {
     public static ResourceNotFoundException forId(String resourceName, String id) {
         return new ResourceNotFoundException(resourceName + " with ID " + id + " not found.");
     }
+
+    public static Object of(String string, Long clientId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'of'");
+    }
     
 }
