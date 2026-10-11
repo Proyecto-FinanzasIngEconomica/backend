@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 
-public class BillingCalendar {
+public final class BillingCalendar {
     public static final int MIN_DAY = 1;
     public static final int MAX_DAY = 30;
  

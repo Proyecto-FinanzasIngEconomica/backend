@@ -3,7 +3,7 @@ package com.crediflow.store_credit_management.credit.engine;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public class RateMath {
+public final class RateMath {
     public static final int DAYS_IN_YEAR = 360;
     public static final int DAYS_IN_MONTH = 30;
     public static final int RATE_SCALE = 9;
