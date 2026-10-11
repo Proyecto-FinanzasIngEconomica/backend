@@ -1,3 +1,45 @@
+## Cómo ejecutar la API
+
+### Requisitos
+- JDK 25
+- Maven 3.9+ (o el wrapper `./mvnw` si el repo lo incluye)
+- MySQL 9.x corriendo en `localhost:3306`
+
+### Pasos
+1. Clonar el repo y entrar a la carpeta del proyecto.
+2. Revisar `src/main/resources/application.properties` y ajustar
+   `spring.datasource.username` y `spring.datasource.password` a tu MySQL local.
+   La base `store_credit_management` se crea sola
+   (`createDatabaseIfNotExist=true`) y las tablas también (`ddl-auto=update`).
+3. Ejecutar:
+```bash
+   mvn clean install
+   mvn spring-boot:run
+```
+   (o correr `StoreCreditManagementApplication` desde el IDE).
+4. Verificar en consola la línea `Tomcat started on port 8080`.
+
+### URLs útiles
+| Recurso | URL |
+|---|---|
+| Swagger UI (probar endpoints) | http://localhost:8080/swagger-ui/index.html |
+| Contrato OpenAPI (JSON) | http://localhost:8080/v3/api-docs |
+
+### Convenciones de la API
+- Ruta base: `/api/v1/stores/{storeId}/...`. Por ahora `storeId` es cualquier
+  número (ej. `1`); cuando exista autenticación saldrá del token.
+- Errores: siempre `{"message": "..."}` con estos códigos:
+  `400` validación o JSON inválido, `404` no encontrado,
+  `422` regla de negocio violada.
+- Paginación: `?page=0&size=20&sort=id`. La respuesta trae `content` y
+  `page { size, number, totalElements, totalPages }`.
+- Tasas como **fracción decimal**: `0.24` = 24 %.
+- Dinero con 2 decimales; moneda `PEN` o `USD`.
+- Enums: `ClientStatus` (ACTIVE, INACTIVE), `RateType` (NOMINAL, EFFECTIVE),
+  `RatePeriod` (MONTHLY, ANNUAL), `CapitalizationPeriod` (DAILY, MONTHLY),
+  `Currency` (PEN, USD).
+
+
 # Sistema de Control de Cuenta Corriente para Créditos Comerciales
 
 ## Descripción del proyecto
