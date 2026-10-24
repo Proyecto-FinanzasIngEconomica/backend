@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Credit Condition Service
@@ -36,6 +37,7 @@ public class CreditConditionService {
 
     private final ClientService clientService;
     private final CreditConditionRepository conditionRepository;
+    private final ClientBalancePort balancePort;
 
     /**
      * Registra una condición nueva para el cliente. Si ya tenía una vigente, la
@@ -57,8 +59,16 @@ public class CreditConditionService {
         requireTeaWithinLimit(lateRate, "moratoria");
 
         LocalDate today = LocalDate.now();
-        conditionRepository.findByClient_IdAndActiveTrue(clientId)
-                .ifPresent(current -> current.close(today));
+        Optional<CreditCondition> current = conditionRepository.findByClient_IdAndActiveTrue(clientId);
+        if (current.isPresent()) {
+            // Mezclar monedas en una deuda viva falsearía el cupo; no hay conversión de divisas.
+            if (current.get().currency() != request.currency()
+                    && balancePort.hasOutstandingBalance(clientId)) {
+                throw new BussinessRuleException(
+                        "No se puede cambiar la moneda del crédito mientras el cliente tenga cuotas pendientes");
+            }
+            current.get().close(today);
+        }
 
         CreditCondition condition = CreditCondition.create(
                 client,
