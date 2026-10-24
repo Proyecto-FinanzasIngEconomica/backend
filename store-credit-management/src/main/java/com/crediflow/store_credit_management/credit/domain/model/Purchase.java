@@ -81,7 +81,11 @@ public class Purchase extends AuditableModel {
     @Column(nullable = false, updatable = false)
     private LocalDate cycleCutoffDate;
 
-    /** Fecha de pago del ciclo: vence la cuota de fin de mes o la primera cuota. */
+     /**
+     * Fecha de pago del ciclo. En fin de mes es el vencimiento de la única
+     * cuota; en cuotas es el fin del período de gracia, y la primera cuota
+     * vence un mes comercial después.
+     */
     @Column(nullable = false, updatable = false)
     private LocalDate cyclePaymentDate;
 

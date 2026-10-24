@@ -55,6 +55,16 @@ public class PurchaseItem extends AuditableModel {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal subtotal;
 
+    /**
+     * Fórmula única del subtotal. La usa también el servicio para conocer el
+     * total de la compra antes de crearla, así ambos cálculos no pueden diferir.
+     */
+    public static BigDecimal subtotalOf(BigDecimal quantity, BigDecimal unitPrice) {
+        return quantity.setScale(3, RoundingMode.HALF_UP)
+                .multiply(unitPrice.setScale(2, RoundingMode.HALF_UP))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
     static PurchaseItem create(Purchase purchase,
                                Long productId,
                                String productName,
@@ -83,7 +93,7 @@ public class PurchaseItem extends AuditableModel {
         item.unitOfMeasure = unitOfMeasure.trim();
         item.quantity = quantity.setScale(3, RoundingMode.HALF_UP);
         item.unitPrice = unitPrice.setScale(2, RoundingMode.HALF_UP);
-        item.subtotal = item.quantity.multiply(item.unitPrice).setScale(2, RoundingMode.HALF_UP);
+        item.subtotal = subtotalOf(quantity, unitPrice);
         return item;
     }
 }

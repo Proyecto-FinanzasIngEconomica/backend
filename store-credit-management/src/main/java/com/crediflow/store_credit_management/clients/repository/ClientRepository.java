@@ -6,9 +6,14 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.crediflow.store_credit_management.clients.domain.model.Client;
 import com.crediflow.store_credit_management.clients.domain.model.ClientStatus;
+
+import jakarta.persistence.LockModeType;
 
 /**
  * Client Repository
@@ -38,4 +43,13 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
      * tienda tiene su propio registro.
      */
     List<Client> findByUserId(Long userId);
+
+        /**
+     * Igual que findByIdAndStoreId, pero bloquea la fila del cliente hasta que
+     * termine la transacción. Sirve para que dos compras simultáneas del mismo
+     * cliente se registren una detrás de otra y no superen juntas el límite.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Client c where c.id = :id and c.storeId = :storeId")
+    Optional<Client> findByIdAndStoreIdForUpdate(@Param("id") Long id, @Param("storeId") Long storeId);
 }

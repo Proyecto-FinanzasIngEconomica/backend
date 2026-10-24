@@ -96,4 +96,14 @@ public class ClientService {
         client.deactivate();
         return client;
     }
+
+    /**
+     * Igual que {@link #get}, pero bloquea al cliente hasta cerrar la
+     * transacción. Debe ser lo PRIMERO que haga la operación que lo use.
+     */
+    @Transactional
+    public Client getForUpdate(Long storeId, Long clientId) {
+        return clientRepository.findByIdAndStoreIdForUpdate(clientId, storeId)
+                .orElseThrow(() -> ResourceNotFoundException.forId("Cliente", clientId.toString()));
+    }
 }
