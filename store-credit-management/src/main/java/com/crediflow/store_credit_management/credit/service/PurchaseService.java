@@ -17,6 +17,7 @@ import com.crediflow.store_credit_management.credit.engine.InstallmentPlan;
 import com.crediflow.store_credit_management.credit.engine.InstallmentScheduler;
 import com.crediflow.store_credit_management.credit.engine.InterestCalculator;
 import com.crediflow.store_credit_management.credit.repository.PurchaseRepository;
+import com.crediflow.store_credit_management.credit.repository.StatementRepository;
 import com.crediflow.store_credit_management.shared.interfaces.rest.exception.BussinessRuleException;
 import com.crediflow.store_credit_management.shared.interfaces.rest.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,7 @@ public class PurchaseService {
     private final CreditLineService creditLineService;
     private final ProductService productService;
     private final PurchaseRepository purchaseRepository;
+    private final StatementRepository statementRepository;
 
     /**
      * Registra una compra. Si cualquier regla falla, no se guarda nada.
@@ -88,6 +90,12 @@ public class PurchaseService {
                 ? endOfMonthInstallment(itemsTotal, condition.compensatoryTea(), purchaseDate, cycle.paymentDate())
                 : financedInstallments(itemsTotal, condition.compensatoryTea(), purchaseDate,
                         cycle.paymentDate(), condition.getPaymentDay(), installmentCount);
+        
+        LocalDate firstDueDate = installments.get(0).dueDate();
+        if (statementRepository.existsByClientIdAndPaymentDateGreaterThanEqual(client.getId(), firstDueDate)) {
+            throw new BussinessRuleException("No se puede registrar la compra: su primera cuota vence el "
+                    + firstDueDate + " y ese ciclo ya fue facturado en un estado de cuenta");
+        }
 
         Purchase purchase = Purchase.register(
                 storeId,

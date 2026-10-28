@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Purchase Installment Repository
@@ -44,4 +46,28 @@ public interface PurchaseInstallmentRepository extends JpaRepository<PurchaseIns
 
     /** ¿Tiene el cliente alguna cuota sin pagar? Sirve para bloquear su baja. */
     boolean existsByPurchase_ClientIdAndStatus(Long clientId, InstallmentStatus status);
+
+    /**
+     * Cuotas del cliente en el estado indicado que vencen en la fecha dada o
+     * antes, ordenadas por fecha de compra. Trae la compra en la misma consulta.
+    */
+    @Query("""
+            select i
+            from PurchaseInstallment i
+            join fetch i.purchase p
+            where p.storeId = :storeId
+              and p.clientId = :clientId
+              and i.status = :status
+              and i.dueDate <= :dueDate
+            order by p.purchasedAt asc, i.installmentNumber asc
+            """)
+    List<PurchaseInstallment> listByStatusDueUpTo(@Param("storeId") Long storeId,
+                                                  @Param("clientId") Long clientId,
+                                                  @Param("status") InstallmentStatus status,
+                                                  @Param("dueDate") LocalDate dueDate);
+
+    /** Cuotas pendientes (por pagar) que vencen hasta la fecha indicada: lo que lista un estado de cuenta. */
+    default List<PurchaseInstallment> pendingDueUpTo(Long storeId, Long clientId, LocalDate dueDate) {
+        return listByStatusDueUpTo(storeId, clientId, InstallmentStatus.PENDING, dueDate);
+    }
 }

@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.crediflow.store_credit_management.clients.domain.model.Client;
 import com.crediflow.store_credit_management.clients.domain.model.ClientStatus;
+import com.crediflow.store_credit_management.clients.domain.model.CreditCondition;
 
 import jakarta.persistence.LockModeType;
 
@@ -44,12 +45,20 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
      */
     List<Client> findByUserId(Long userId);
 
-        /**
+    /**
      * Igual que findByIdAndStoreId, pero bloquea la fila del cliente hasta que
      * termine la transacción. Sirve para que dos compras simultáneas del mismo
      * cliente se registren una detrás de otra y no superen juntas el límite.
-     */
+    */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from Client c where c.id = :id and c.storeId = :storeId")
     Optional<Client> findByIdAndStoreIdForUpdate(@Param("id") Long id, @Param("storeId") Long storeId);
+
+    /**
+     * Todas las condiciones vigentes de todas las tiendas, con su cliente ya
+     * cargado. La usa la tarea programada de estados de cuenta, que recorre a
+     * todos los clientes sin importar la tienda.
+    */
+    @Query("select c from CreditCondition c join fetch c.client where c.active = true")
+    List<CreditCondition> findAllActiveWithClient();
 }
