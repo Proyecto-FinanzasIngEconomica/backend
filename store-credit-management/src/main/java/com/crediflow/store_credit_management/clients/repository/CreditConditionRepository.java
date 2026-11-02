@@ -24,4 +24,6 @@ public interface CreditConditionRepository extends JpaRepository<CreditCondition
 
     /** Historial completo de condiciones, de la más reciente a la más antigua. */
     List<CreditCondition> findByClient_IdOrderByValidFromDescIdDesc(Long clientId);
+
+    List<CreditCondition> findAllActiveWithClient();
 }
