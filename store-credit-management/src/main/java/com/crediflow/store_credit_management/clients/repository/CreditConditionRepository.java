@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.crediflow.store_credit_management.clients.domain.model.CreditCondition;
 
@@ -25,5 +26,6 @@ public interface CreditConditionRepository extends JpaRepository<CreditCondition
     /** Historial completo de condiciones, de la más reciente a la más antigua. */
     List<CreditCondition> findByClient_IdOrderByValidFromDescIdDesc(Long clientId);
 
+    @Query("select c from CreditCondition c join fetch c.client where c.active = true")
     List<CreditCondition> findAllActiveWithClient();
 }
