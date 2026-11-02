@@ -100,4 +100,16 @@ public class PurchaseInstallment extends AuditableModel {
     public boolean isPending() {
         return status == InstallmentStatus.PENDING;
     }
+
+    /** Registra el pago de la cuota. Una cuota solo se paga una vez. */
+    public void markPaid(LocalDateTime paidAt) {
+        if (paidAt == null) {
+            throw new IllegalArgumentException("La fecha de pago es obligatoria");
+        }
+        if (status != InstallmentStatus.PENDING) {
+            throw new IllegalStateException("La cuota " + installmentNumber + " ya está pagada");
+        }
+        this.status = InstallmentStatus.PAID;
+        this.paidAt = paidAt;
+    }
 }

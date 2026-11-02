@@ -171,6 +171,14 @@ public class Statement extends AuditableModel {
         this.status = StatementStatus.SUPERSEDED;
     }
 
+    /** El estado se pagó completo (no hay pagos parciales). Solo un estado emitido puede pagarse. */
+    public void markPaid() {
+        if (status != StatementStatus.ISSUED) {
+            throw new IllegalStateException("Solo un estado de cuenta emitido puede pagarse");
+        }
+        this.status = StatementStatus.PAID;
+    }
+
     /** Vista de solo lectura: las líneas solo cambian al emitir el estado. */
     public List<StatementLine> getLines() {
         return Collections.unmodifiableList(lines);
