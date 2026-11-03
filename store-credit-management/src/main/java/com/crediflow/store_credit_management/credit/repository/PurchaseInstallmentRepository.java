@@ -47,6 +47,9 @@ public interface PurchaseInstallmentRepository extends JpaRepository<PurchaseIns
     /** ¿Tiene el cliente alguna cuota sin pagar? Sirve para bloquear su baja. */
     boolean existsByPurchase_ClientIdAndStatus(Long clientId, InstallmentStatus status);
 
+    /** ¿Tiene la tienda alguna cuota sin cobrar? Sirve para bloquear su baja. */
+    boolean existsByPurchase_StoreIdAndStatus(Long storeId, InstallmentStatus status);
+
     /**
      * Cuotas del cliente en el estado indicado que vencen en la fecha dada o
      * antes, ordenadas por fecha de compra. Trae la compra en la misma consulta.
