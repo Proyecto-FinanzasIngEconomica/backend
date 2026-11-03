@@ -110,4 +110,14 @@ public class CreditConditionService {
                     "La tasa " + name + " pactada es demasiado alta: su TEA equivalente supera el máximo permitido");
         }
     }
+    
+    /**
+     * Todas las condiciones vigentes de TODAS las tiendas, con su cliente ya
+     * cargado. Es de uso interno para tareas programadas del sistema: NO filtra
+     * por tienda, así que nunca debe exponerse a través de un controlador.
+     */
+    @Transactional(readOnly = true)
+    public List<CreditCondition> listAllActive() {
+        return conditionRepository.findAllActiveWithClient();
+    }
 }
