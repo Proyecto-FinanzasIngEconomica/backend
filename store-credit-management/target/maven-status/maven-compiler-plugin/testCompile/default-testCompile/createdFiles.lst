@@ -1,0 +1,5 @@
+com\crediflow\store_credit_management\enginetests\BillingCalendarTest.class
+com\crediflow\store_credit_management\enginetests\InterestCalculatorTest.class
+com\crediflow\store_credit_management\enginetests\RateMathTest.class
+com\crediflow\store_credit_management\enginetests\InstallmentSchedulerTest.class
+com\crediflow\store_credit_management\StoreCreditManagementApplicationTests.class
