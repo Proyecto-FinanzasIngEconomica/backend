@@ -8,6 +8,9 @@ import com.crediflow.store_credit_management.clients.repository.ClientRepository
 import com.crediflow.store_credit_management.shared.interfaces.rest.exception.BussinessRuleException;
 import com.crediflow.store_credit_management.shared.interfaces.rest.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -56,6 +59,15 @@ public class ClientService {
     public Client get(Long storeId, Long clientId) {
         return clientRepository.findByIdAndStoreId(clientId, storeId)
                 .orElseThrow(() -> ResourceNotFoundException.forId("Cliente", clientId.toString()));
+    }
+
+    /**
+     * Clientes vinculados a una cuenta de usuario. Con una cuenta por cliente
+     * es a lo sumo uno; devuelve lista porque así lo expresa el repositorio.
+     */
+    @Transactional(readOnly = true)
+    public List<Client> findByUserId(Long userId) {
+        return clientRepository.findByUserId(userId);
     }
 
     /** Lista paginada de clientes; si status es null, trae todos. */
