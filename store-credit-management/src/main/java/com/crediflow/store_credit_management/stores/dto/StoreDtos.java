@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
 
 /**
  * Store DTOs
@@ -28,7 +29,7 @@ public final class StoreDtos {
     // Entrada
     // ------------------------------------------------------------------
 
-    public record CreateStoreRequest(
+        public record CreateStoreRequest(
             @Schema(description = "Id del giro de negocio (ver GET /api/v1/business-types)", example = "1")
             @NotNull Long businessTypeId,
 
@@ -41,8 +42,26 @@ public final class StoreDtos {
 
             @Size(max = 200) String address,
             @Size(max = 20) String phone,
-            @Email @Size(max = 100) String email
+            @Email @Size(max = 100) String email,
+
+            @Schema(description = "Cuenta del administrador de la tienda; se crea junto con ella")
+            @NotNull @Valid StoreAdminRequest admin
     ) {
+    }
+
+    public record StoreAdminRequest(
+            @Schema(example = "bodegaperez")
+            @NotBlank @Pattern(regexp = "[A-Za-z0-9]{4,50}",
+                    message = "debe tener entre 4 y 50 letras o números")
+            String username,
+
+            @NotBlank @Size(min = 8, max = 100) String password
+    ) {
+        @Override
+        public String toString() {
+            return "StoreAdminRequest[username=" + username + ", password=***]";
+        }
+    } {
     }
 
     /** El RUC no se puede cambiar, por eso no aparece aquí. */

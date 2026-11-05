@@ -2,6 +2,8 @@ package com.crediflow.store_credit_management.iam.repository;
 
 import com.crediflow.store_credit_management.iam.domain.model.UserAccount;
 import com.crediflow.store_credit_management.iam.domain.model.UserRole;
+import com.crediflow.store_credit_management.iam.domain.model.UserStatus;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +34,7 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
 
     /** Lista paginada de las cuentas de una tienda. */
     Page<UserAccount> findByStoreId(Long storeId, Pageable pageable);
+
+    /** Cuántas cuentas de un rol y estado tiene la tienda (para no dejarla sin administrador). */
+    long countByStoreIdAndRoleAndStatus(Long storeId, UserRole role, UserStatus status);
 }
