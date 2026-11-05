@@ -246,10 +246,3 @@ cliente de varias tiendas con perfiles de riesgo completamente independientes en
 - Motor de base de datos y dependencias adicionales: en evaluación/discusión durante el
   desarrollo (ver decisiones de infraestructura, documentadas en fases posteriores del
   proyecto).
-
----
-
-## Estado del proyecto
-
-Este README se actualizará progresivamente conforme avancen las fases de diseño
-estratégico, diseño táctico, motor financiero, infraestructura, seguridad y calidad.
