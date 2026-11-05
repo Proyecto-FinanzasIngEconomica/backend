@@ -48,4 +48,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new MessageResource("El cuerpo de la solicitud está mal formado o tiene valores inválidos"));
     }
+
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ResponseEntity<MessageResource> handleAuthenticationFailed(AuthenticationFailedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new MessageResource(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AccessForbiddenException.class)
+    public ResponseEntity<MessageResource> handleAccessForbidden(AccessForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new MessageResource(ex.getMessage()));
+    }
 }

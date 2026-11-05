@@ -33,6 +33,7 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final BusinessTypeRepository businessTypeRepository;
     private final StoreBalancePort balancePort;
+    private final StoreAdminProvisioner adminProvisioner;
 
     /** Da de alta una tienda. El RUC no puede repetirse. */
     @Transactional
@@ -50,7 +51,10 @@ public class StoreService {
                 request.address(),
                 request.phone(),
                 request.email());
-        return storeRepository.save(store);
+        Store saved = storeRepository.save(store);
+        adminProvisioner.createStoreAdmin(
+                saved.getId(), request.admin().username(), request.admin().password());
+        return saved;
     }
 
     /** Busca una tienda; si no existe, responde 404. */
