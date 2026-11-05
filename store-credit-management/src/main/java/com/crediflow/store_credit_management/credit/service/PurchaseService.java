@@ -1,5 +1,7 @@
 package com.crediflow.store_credit_management.credit.service;
 
+import com.crediflow.store_credit_management.audit.domain.model.AuditAction;
+import com.crediflow.store_credit_management.audit.service.AuditService;
 import com.crediflow.store_credit_management.catalog.domain.model.Product;
 import com.crediflow.store_credit_management.catalog.service.ProductService;
 import com.crediflow.store_credit_management.clients.domain.model.Client;
@@ -54,6 +56,7 @@ public class PurchaseService {
     private final ProductService productService;
     private final PurchaseRepository purchaseRepository;
     private final StatementRepository statementRepository;
+    private final AuditService auditService;
 
     /**
      * Registra una compra. Si cualquier regla falla, no se guarda nada.
@@ -120,7 +123,11 @@ public class PurchaseService {
                     + " y el cupo disponible es "
                     + condition.currency() + " " + available.max(BigDecimal.ZERO).toPlainString());
         }
-        return purchaseRepository.save(purchase);
+        Purchase saved = purchaseRepository.save(purchase);
+        auditService.record(AuditAction.PURCHASE_REGISTERED, storeId, "Purchase", saved.getId(),
+                "clientId=" + client.getId() + "; modality=" + request.modality()
+                        + "; financed=" + saved.getFinancedAmount().toPlainString());
+        return saved;
     }
 
     /** Busca una compra de la tienda; si no existe o es de otra, responde 404. */
