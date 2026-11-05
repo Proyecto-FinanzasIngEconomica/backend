@@ -1,5 +1,7 @@
 package com.crediflow.store_credit_management.iam.service;
 
+import com.crediflow.store_credit_management.audit.domain.model.AuditAction;
+import com.crediflow.store_credit_management.audit.service.AuditService;
 import com.crediflow.store_credit_management.clients.domain.model.Client;
 import com.crediflow.store_credit_management.clients.service.ClientService;
 import com.crediflow.store_credit_management.iam.domain.model.UserAccount;
@@ -35,6 +37,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final StoreService storeService;
     private final ClientService clientService;
+    private final AuditService auditService;
 
     /**
      * Hash que se compara cuando el usuario no existe, para que responder
@@ -46,12 +49,14 @@ public class AuthService {
                        PasswordEncoder passwordEncoder,
                        TokenService tokenService,
                        StoreService storeService,
-                       ClientService clientService) {
+                       ClientService clientService,
+                       AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.storeService = storeService;
         this.clientService = clientService;
+        this.auditService = auditService;
         this.dummyHash = passwordEncoder.encode("contraseña-de-relleno");
     }
 
@@ -66,29 +71,34 @@ public class AuthService {
      */
     @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public LoginResult login(String username, String password) {
-        UserAccount account = userRepository.findByUsername(UserAccount.normalizeUsername(username)).orElse(null);
+        String normalized = UserAccount.normalizeUsername(username);
+        UserAccount account = userRepository.findByUsername(normalized).orElse(null);
         if (account == null) {
             passwordEncoder.matches(password, dummyHash);
-            throw new AuthenticationFailedException(BAD_CREDENTIALS);
+            throw fail(null, normalized, "usuario inexistente", BAD_CREDENTIALS);
         }
         if (account.getStatus() == UserStatus.BLOCKED) {
-            throw new AuthenticationFailedException(
+            throw fail(account, normalized, "cuenta bloqueada",
                     "La cuenta está bloqueada por intentos fallidos; pide a un administrador que la desbloquee");
         }
         if (account.getStatus() == UserStatus.INACTIVE) {
-            throw new AuthenticationFailedException("La cuenta está dada de baja");
+            throw fail(account, normalized, "cuenta dada de baja", "La cuenta está dada de baja");
         }
 
         if (!passwordEncoder.matches(password, account.getPasswordHash())) {
             boolean nowBlocked = account.recordFailedAttempt();
-            throw new AuthenticationFailedException(nowBlocked
-                    ? "La cuenta fue bloqueada tras " + UserAccount.MAX_FAILED_ATTEMPTS
-                            + " intentos fallidos seguidos; pide a un administrador que la desbloquee"
-                    : BAD_CREDENTIALS);
+            throw fail(account, normalized,
+                    nowBlocked ? "contraseña incorrecta; cuenta bloqueada" : "contraseña incorrecta",
+                    nowBlocked
+                            ? "La cuenta fue bloqueada tras " + UserAccount.MAX_FAILED_ATTEMPTS
+                                    + " intentos fallidos seguidos; pide a un administrador que la desbloquee"
+                            : BAD_CREDENTIALS);
         }
 
         Long clientId = resolveContext(account);
         account.recordSuccessfulLogin(LocalDateTime.now());
+        auditService.recordAs(AuditAction.LOGIN, account.getId(), account.getUsername(),
+                account.getStoreId(), null);
         return new LoginResult(tokenService.issue(account, clientId), account, clientId);
     }
 
@@ -103,19 +113,32 @@ public class AuthService {
         }
         Store store = storeService.get(account.getStoreId());
         if (!store.isActive()) {
-            throw new AuthenticationFailedException("La tienda está dada de baja");
+            throw fail(account, account.getUsername(), "tienda dada de baja", "La tienda está dada de baja");
         }
         if (account.getRole() == UserRole.STORE_ADMIN) {
             return null;
         }
         List<Client> clients = clientService.findByUserId(account.getId());
         if (clients.size() != 1) {
-            throw new AuthenticationFailedException("La cuenta no está vinculada a ningún cliente");
+            throw fail(account, account.getUsername(), "sin cliente vinculado",
+                    "La cuenta no está vinculada a ningún cliente");
         }
         Client client = clients.get(0);
         if (!client.isActive() || !client.getStoreId().equals(account.getStoreId())) {
-            throw new AuthenticationFailedException("El cliente de esta cuenta está dado de baja");
+            throw fail(account, account.getUsername(), "cliente dado de baja",
+                    "El cliente de esta cuenta está dado de baja");
         }
         return client.getId();
+    }
+
+    /** Registra el intento fallido en la auditoría y devuelve la excepción para lanzarla. */
+    private AuthenticationFailedException fail(UserAccount account, String attemptedUsername,
+                                               String reason, String message) {
+        auditService.recordAs(AuditAction.LOGIN_FAILED,
+                account == null ? null : account.getId(),
+                attemptedUsername,
+                account == null ? null : account.getStoreId(),
+                reason);
+        return new AuthenticationFailedException(message);
     }
 }

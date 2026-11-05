@@ -1,5 +1,7 @@
 package com.crediflow.store_credit_management.credit.service;
 
+import com.crediflow.store_credit_management.audit.domain.model.AuditAction;
+import com.crediflow.store_credit_management.audit.service.AuditService;
 import com.crediflow.store_credit_management.clients.domain.model.Client;
 import com.crediflow.store_credit_management.clients.service.ClientService;
 import com.crediflow.store_credit_management.credit.domain.model.Payment;
@@ -49,15 +51,18 @@ public class PaymentService {
     private final StatementRepository statementRepository;
     private final PaymentRepository paymentRepository;
     private final TransactionTemplate transactionTemplate;
+    private final AuditService auditService;
 
     public PaymentService(PlatformTransactionManager transactionManager,
                           ClientService clientService,
                           StatementRepository statementRepository,
-                          PaymentRepository paymentRepository) {
+                          PaymentRepository paymentRepository,
+                          AuditService auditService) {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.clientService = clientService;
         this.statementRepository = statementRepository;
         this.paymentRepository = paymentRepository;
+        this.auditService = auditService;
     }
 
     /**
@@ -73,7 +78,13 @@ public class PaymentService {
         Long clientId = statementRepository.findByIdAndStoreId(statementId, storeId)
                 .orElseThrow()
                 .getClientId();
-        return transactionTemplate.execute(status -> payLocked(storeId, clientId, statementId, request));
+        return transactionTemplate.execute(status -> {
+            Payment payment = payLocked(storeId, clientId, statementId, request);
+            auditService.record(AuditAction.PAYMENT_REGISTERED, storeId, "Payment", payment.getId(),
+                    "statementId=" + statementId + "; clientId=" + clientId
+                            + "; amount=" + request.amount());
+            return payment;
+        });
     }
 
     /** Busca un pago de la tienda; si no existe o es de otra, responde 404. */

@@ -128,6 +128,8 @@ public class SecurityConfiguration {
 
                     // Portal del cliente
                     requests.requestMatchers("/api/v1/me/**").hasRole("CLIENT");
+                    
+                    requests.requestMatchers("/api/v1/audit").hasRole("SYSTEM_ADMIN");
 
                     requests.anyRequest().denyAll();
                 })
