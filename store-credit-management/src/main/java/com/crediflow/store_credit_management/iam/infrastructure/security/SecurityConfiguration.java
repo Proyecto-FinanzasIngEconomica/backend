@@ -96,7 +96,8 @@ public class SecurityConfiguration {
             HttpSecurity http,
             AccountStatusJwtConverter jwtConverter,
             JsonSecurityErrorHandlers errorHandlers,
-            @Value("${crediflow.security.swagger-public:false}") boolean swaggerPublic) throws Exception {
+            @Value("${crediflow.security.swagger-public:false}") boolean swaggerPublic,
+            @Value("${springdoc.api-docs.path:/v3/api-docs}") String apiDocsPath) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -108,7 +109,9 @@ public class SecurityConfiguration {
                     requests.requestMatchers("/error").permitAll();
                     requests.requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll();
                     if (swaggerPublic) {
-                        requests.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                        requests.requestMatchers(
+                                apiDocsPath, apiDocsPath + "/**",
+                                "/swagger-ui/**", "/swagger-ui.html").permitAll();
                     }
                     requests.requestMatchers("/api/v1/auth/**").authenticated();
 
