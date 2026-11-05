@@ -66,4 +66,14 @@ public final class AuthDtos {
             return new LoginResponse(accessToken, "Bearer", expiresAt, UserResource.from(account, clientId));
         }
     }
+
+    public record ChangePasswordRequest(
+            @NotBlank @Size(max = 100) String currentPassword,
+            @NotBlank @Size(min = 8, max = 100) String newPassword
+    ) {
+        @Override
+        public String toString() {
+            return "ChangePasswordRequest[currentPassword=***, newPassword=***]";
+        }
+    }
 }

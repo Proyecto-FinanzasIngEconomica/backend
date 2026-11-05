@@ -37,4 +37,7 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
 
     /** Cuántas cuentas de un rol y estado tiene la tienda (para no dejarla sin administrador). */
     long countByStoreIdAndRoleAndStatus(Long storeId, UserRole role, UserStatus status);
+
+    /** Cuentas de una tienda con un rol dado. */
+    Page<UserAccount> findByStoreIdAndRole(Long storeId, UserRole role, Pageable pageable);
 }
