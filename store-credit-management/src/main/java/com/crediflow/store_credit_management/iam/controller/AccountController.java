@@ -3,6 +3,7 @@ package com.crediflow.store_credit_management.iam.controller;
 import com.crediflow.store_credit_management.iam.dto.AccountDtos.AccountResource;
 import com.crediflow.store_credit_management.iam.dto.AccountDtos.CreateAccountRequest;
 import com.crediflow.store_credit_management.iam.dto.AccountDtos.ResetPasswordRequest;
+import com.crediflow.store_credit_management.iam.infrastructure.security.CurrentUser;
 import com.crediflow.store_credit_management.iam.service.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,30 +53,36 @@ public class AccountController {
     }
 
     @GetMapping("/accounts")
-    @Operation(summary = "Listar las cuentas de la tienda")
+    @Operation(summary = "Listar las cuentas que puedes gestionar",
+            description = "El administrador de tienda ve las cuentas de clientes; el administrador del sistema, las de administradores de tienda.")
     public PagedModel<AccountResource> list(@PathVariable Long storeId,
+                                            @AuthenticationPrincipal Jwt jwt,
                                             @ParameterObject @PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return new PagedModel<>(accountService.list(storeId, pageable).map(AccountResource::from));
+        return new PagedModel<>(accountService.list(storeId, CurrentUser.from(jwt).role(), pageable)
+                .map(AccountResource::from));
     }
 
     @PatchMapping("/accounts/{accountId}/unblock")
     @Operation(summary = "Desbloquear una cuenta bloqueada por intentos fallidos")
-    public AccountResource unblock(@PathVariable Long storeId, @PathVariable Long accountId) {
-        return AccountResource.from(accountService.unblock(storeId, accountId));
+    public AccountResource unblock(@PathVariable Long storeId, @PathVariable Long accountId,
+                                   @AuthenticationPrincipal Jwt jwt) {
+        return AccountResource.from(accountService.unblock(storeId, accountId, CurrentUser.from(jwt).role()));
     }
 
     @PatchMapping("/accounts/{accountId}/deactivate")
     @Operation(summary = "Dar de baja una cuenta",
             description = "No se puede dar de baja al único administrador activo de la tienda.")
-    public AccountResource deactivate(@PathVariable Long storeId, @PathVariable Long accountId) {
-        return AccountResource.from(accountService.deactivate(storeId, accountId));
+    public AccountResource deactivate(@PathVariable Long storeId, @PathVariable Long accountId,
+                                      @AuthenticationPrincipal Jwt jwt) {
+        return AccountResource.from(accountService.deactivate(storeId, accountId, CurrentUser.from(jwt).role()));
     }
 
     @PatchMapping("/accounts/{accountId}/password")
     @Operation(summary = "Restablecer la contraseña de una cuenta")
-    public AccountResource resetPassword(@PathVariable Long storeId,
-                                         @PathVariable Long accountId,
-                                         @Valid @RequestBody ResetPasswordRequest request) {
-        return AccountResource.from(accountService.resetPassword(storeId, accountId, request.newPassword()));
+    public AccountResource resetPassword(@PathVariable Long storeId, @PathVariable Long accountId,
+                                         @Valid @RequestBody ResetPasswordRequest request,
+                                         @AuthenticationPrincipal Jwt jwt) {
+        return AccountResource.from(accountService.resetPassword(
+                storeId, accountId, request.newPassword(), CurrentUser.from(jwt).role()));
     }
 }
