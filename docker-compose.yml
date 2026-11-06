@@ -1,0 +1,31 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: crediflow_local
+      MYSQL_DATABASE: store_credit_management
+    ports:
+      - "3307:3306"        # 3307 para no chocar con un MySQL local en 3306
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev      # solo local: admin / Admin12345 y Swagger abierto
+      DB_URL: jdbc:mysql://db:3306/store_credit_management?allowPublicKeyRetrieval=true&sslMode=DISABLED
+      DB_USERNAME: root
+      DB_PASSWORD: crediflow_local
+
+volumes:
+  db-data:
