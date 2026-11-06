@@ -103,10 +103,11 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(errors -> errors
-                        .authenticationEntryPoint(errorHandlers)
+                        .authenticationEntryPoint(errorHandlers)    
                         .accessDeniedHandler(errorHandlers))
                 .authorizeHttpRequests(requests -> {
                     requests.requestMatchers("/error").permitAll();
+                    requests.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
                     requests.requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll();
                     if (swaggerPublic) {
                         requests.requestMatchers(
