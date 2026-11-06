@@ -1,5 +1,8 @@
 package com.crediflow.store_credit_management.portal.controller;
 
+import com.crediflow.store_credit_management.catalog.domain.model.ProductStatus;
+import com.crediflow.store_credit_management.catalog.dto.ProductDtos.ProductResource;
+import com.crediflow.store_credit_management.catalog.service.ProductService;
 import com.crediflow.store_credit_management.clients.dto.ClientDtos.ClientResource;
 import com.crediflow.store_credit_management.clients.dto.ClientDtos.CreditConditionResource;
 import com.crediflow.store_credit_management.clients.service.ClientService;
@@ -56,6 +59,17 @@ public class ClientPortalController {
     private final PurchaseService purchaseService;
     private final StatementService statementService;
     private final PaymentService paymentService;
+    private final ProductService productService;
+
+    @GetMapping("/products")
+    @Operation(summary = "Productos activos de mi tienda")
+    public PagedModel<ProductResource> products(
+            @AuthenticationPrincipal Jwt jwt,
+            @ParameterObject @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        CurrentUser me = requireClient(jwt);
+        return new PagedModel<>(productService.list(me.storeId(), ProductStatus.ACTIVE, pageable)
+                .map(ProductResource::from));
+    }
 
     @GetMapping("/profile")
     @Operation(summary = "Mis datos")
