@@ -1,43 +1,124 @@
 ## Cómo ejecutar la API
 
-### Requisitos
-- JDK 25
-- Maven 3.9+ (o el wrapper `./mvnw` si el repo lo incluye)
-- MySQL 9.x corriendo en `localhost:3306`
+Hay dos formas. Elige una.
 
-### Pasos
-1. Clonar el repo y entrar a la carpeta del proyecto.
-2. Revisar `src/main/resources/application.properties` y ajustar
-   `spring.datasource.username` y `spring.datasource.password` a tu MySQL local.
-   La base `store_credit_management` se crea sola
-   (`createDatabaseIfNotExist=true`) y las tablas también (`ddl-auto=update`).
-3. Ejecutar:
+### Opción A: Docker Compose (la más rápida, no necesitas instalar MySQL)
+
+Requisito: Docker Desktop.
+
 ```bash
+docker compose up --build
+```
+
+Levanta MySQL y la API juntos. Cuando veas `Started StoreCreditManagementApplication` en la consola, está lista.
+
+| Qué | Dónde |
+|---|---|
+| API | http://localhost:8080 |
+| MySQL (por si quieres mirar tablas) | `localhost:3307`, usuario `root`, contraseña `crediflow_local`, base `store_credit_management` |
+
+Detener: `docker compose down` (conserva los datos) o `docker compose down -v` (borra también la base).
+
+### Opción B: desde el IDE o con Maven (con tu propio MySQL)
+
+Requisitos:
+- JDK 25
+- Maven 3.9+ (o el wrapper `./mvnw`; en Windows, `mvnw.cmd`)
+- MySQL 8.4 o superior corriendo en `localhost:3306`
+
+Pasos:
+
+1. Clona el repositorio y entra a la carpeta del proyecto.
+2. Crea el archivo **`.env.properties`** en la raíz del proyecto (junto al `pom.xml`) con la contraseña de **tu** MySQL local. Hay una plantilla en `.env.properties.example`:
+
+   ```properties
+   spring.datasource.password=TU_CONTRASEÑA_DE_MYSQL
+   ```
+
+   Ese archivo está en `.gitignore`: **nunca se sube al repositorio**. Si tu usuario no es `root`, agrega también `spring.datasource.username=TU_USUARIO`.
+   Alternativa: definir las variables de entorno `DB_USERNAME` y `DB_PASSWORD` en la configuración de ejecución de tu IDE.
+3. Ejecuta:
+
+   ```bash
    mvn clean install
    mvn spring-boot:run
-```
-   (o correr `StoreCreditManagementApplication` desde el IDE).
-4. Verificar en consola la línea `Tomcat started on port 8080`.
+   ```
 
-### URLs útiles
+   (o corre `StoreCreditManagementApplication` desde el IDE).
+4. Verifica en consola la línea `Tomcat started on port 8080`. La base `store_credit_management` y las tablas se crean solas.
+
+> **Si ves `Access denied for user 'root'` o `Unable to determine Dialect`:** la contraseña de `.env.properties` no coincide con la de tu MySQL. Revisa que el archivo se llame exactamente `.env.properties` (sin `.txt`), que no tenga comillas ni espacios al final, y que esté en la raíz del proyecto.
+
+### Probar la API
+
+Al arrancar en local (perfil `dev`, el predeterminado) se crea un administrador del sistema:
+
+| Usuario | Contraseña |
+|---|---|
+| `admin` | `Admin12345` |
+
+**Solo para desarrollo.** En producción esas credenciales no existen: se definen por variables de entorno (ver [docs/despliegue.md](docs/despliegue.md)).
+
+1. Abre Swagger UI: http://localhost:8080/swagger-ui/index.html
+2. Ejecuta `POST /api/v1/auth/login` con `{"username": "admin", "password": "Admin12345"}`.
+3. Copia el `accessToken` de la respuesta, pulsa **Authorize** (arriba a la derecha) y pégalo.
+4. Ya puedes probar los endpoints que permite tu rol.
+
 | Recurso | URL |
 |---|---|
-| Swagger UI (probar endpoints) | http://localhost:8080/swagger-ui/index.html |
-| Contrato OpenAPI (JSON) | http://localhost:8080/v3/api-docs |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| Contrato OpenAPI (JSON) | http://localhost:8080 + el valor de `springdoc.api-docs.path` (por ejemplo `/v1/api-docs`) |
+| Salud del servicio | http://localhost:8080/actuator/health |
+
+### Roles
+
+| Rol | Qué hace | Rutas |
+|---|---|---|
+| `SYSTEM_ADMIN` | Crea tiendas y a sus administradores | `/api/v1/stores`, `/api/v1/business-types`, `/api/v1/audit` |
+| `STORE_ADMIN` | Gestiona **su** tienda: productos, clientes, compras, estados de cuenta, pagos | `/api/v1/stores/{su storeId}/...` |
+| `CLIENT` | Consulta lo suyo | `/api/v1/me/...` |
+
+El recorrido completo, paso a paso, está en [docs/flujos-de-la-aplicacion.md](docs/flujos-de-la-aplicacion.md).
 
 ### Convenciones de la API
-- Ruta base: `/api/v1/stores/{storeId}/...`. Por ahora `storeId` es cualquier
-  número (ej. `1`); cuando exista autenticación saldrá del token.
-- Errores: siempre `{"message": "..."}` con estos códigos:
-  `400` validación o JSON inválido, `404` no encontrado,
-  `422` regla de negocio violada.
-- Paginación: `?page=0&size=20&sort=id`. La respuesta trae `content` y
-  `page { size, number, totalElements, totalPages }`.
-- Tasas como **fracción decimal**: `0.24` = 24 %.
-- Dinero con 2 decimales; moneda `PEN` o `USD`.
-- Enums: `ClientStatus` (ACTIVE, INACTIVE), `RateType` (NOMINAL, EFFECTIVE),
-  `RatePeriod` (MONTHLY, ANNUAL), `CapitalizationPeriod` (DAILY, MONTHLY),
-  `Currency` (PEN, USD).
+
+- **Autenticación:** `Authorization: Bearer <token>` en todo, salvo `POST /api/v1/auth/login`. El token dura 8 horas; al vencer hay que iniciar sesión de nuevo.
+- **Rutas de tienda:** `/api/v1/stores/{storeId}/...`. El `storeId` debe ser el de tu token (`user.storeId` en la respuesta del login); si no, 403.
+- **Errores:** siempre `{"message": "..."}` con estos códigos:
+
+  | Código | Significado |
+  |---|---|
+  | 400 | Validación o JSON inválido |
+  | 401 | Sin sesión válida (volver a iniciar sesión) |
+  | 403 | Sin permiso para esa ruta o esa tienda |
+  | 404 | No existe (o es de otra tienda) |
+  | 422 | Regla de negocio violada |
+
+- **Paginación:** `?page=0&size=20&sort=id`. La respuesta trae `content` y `page { size, number, totalElements, totalPages }`.
+- **Tasas** como fracción decimal: `0.24` = 24 %. **Dinero** con 2 decimales; moneda `PEN` o `USD`.
+- **Fechas y horas:** ISO-8601 sin zona (`2026-10-26T10:00:00`), en hora de Lima.
+- **Enums:** `UserRole` (SYSTEM_ADMIN, STORE_ADMIN, CLIENT), `UserStatus` (ACTIVE, BLOCKED, INACTIVE), `PurchaseModality` (END_OF_MONTH, INSTALLMENTS), `StatementStatus` (ISSUED, PAID, SUPERSEDED), `RateType` (NOMINAL, EFFECTIVE), `RatePeriod` (MONTHLY, ANNUAL), `CapitalizationPeriod` (DAILY, MONTHLY), `Currency` (PEN, USD).
+
+### Para el equipo de frontend
+
+- **CORS:** los orígenes permitidos están en la propiedad `crediflow.cors.allowed-origins`. Si tu frontend corre en un puerto distinto, agrégalo ahí (o pídelo por variable de entorno en producción).
+- **Los nombres exactos de los campos** salen siempre de Swagger / OpenAPI, que refleja los DTOs reales. No los copies de este README.
+- **Qué hacer con 401:** borrar el token y mandar al login. **403:** mostrar "sin permiso". **422:** mostrar el `message` al usuario (es un texto claro, por ejemplo "El monto no coincide con el total a pagar…").
+- **Primer request lento:** en el servidor de pruebas gratuito, la primera llamada tras un rato inactivo puede tardar cerca de un minuto. Muestra un estado de carga.
+- **Ya disponible para construir:** login y sesión, administración de tiendas (`SYSTEM_ADMIN`), productos, clientes y condición de crédito, compras, estados de cuenta, pagos, gestión de cuentas, auditoría, y el portal del cliente (`/api/v1/me/...`).
+
+### Documentación
+
+| Documento | Contenido |
+|---|---|
+| [docs/formulas-financieras.md](docs/formulas-financieras.md) | Fórmulas financieras y dónde se aplican en el código |
+| [docs/flujos-de-la-aplicacion.md](docs/flujos-de-la-aplicacion.md) | Flujos y escenarios, de punta a punta |
+| [docs/despliegue.md](docs/despliegue.md) | Despliegue en Render y Aiven, y ejecución con Docker |
+
+### Estado de desarrollo
+
+- La contraseña del administrador de desarrollo (`admin` / `Admin12345`) y el secreto JWT de `dev` son solo para local.
+- Los estados de cuenta se generan **a mano** (`POST .../clients/{clientId}/statements`); la generación automática está apagada por defecto. Detalles en `docs/despliegue.md`, sección 6.
 
 
 # Sistema de Control de Cuenta Corriente para Créditos Comerciales
